@@ -3,19 +3,28 @@ package amedia;
 import java.io.File;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 
-public class FXMLDocumentController implements Initializable {
+public class FXMLDocumentController implements EventHandler, Initializable {
     
     private MediaPlayer mediaPlayer;
     private String filePath;
@@ -27,6 +36,10 @@ public class FXMLDocumentController implements Initializable {
     private Label label;
     @FXML
     private Button button;
+    @FXML
+    private Slider slider;
+    @FXML
+    private Slider seekSlider;
     
     @FXML
     private void handleButtonAction(ActionEvent event) {
@@ -44,6 +57,30 @@ public class FXMLDocumentController implements Initializable {
                     DoubleProperty height = mediaView.fitHeightProperty();//set height to height of the media player
                     width.bind(Bindings.selectDouble(mediaView.sceneProperty(), "width"));
                     height.bind(Bindings.selectDouble(mediaView.sceneProperty(), "height"));
+                    
+                    //The following lines adjust the volume and make the slider work with it
+                    slider.setValue(mediaPlayer.getVolume() * 100);
+                    slider.valueProperty().addListener(new InvalidationListener(){
+                    @Override
+                    public void invalidated(Observable observable) {
+                        mediaPlayer.setVolume(slider.getValue()/100);
+                    }
+                });
+                    
+                    mediaPlayer.currentTimeProperty().addListener(new ChangeListener<Duration>() {
+                    @Override
+                    public void changed(ObservableValue<? extends Duration> observable, Duration oldValue, Duration newValue) {
+                        seekSlider.setValue(newValue.toSeconds());
+                    }
+                });
+                    
+                    seekSlider.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent event) {
+                        mediaPlayer.seek(Duration.seconds(seekSlider.getValue()));
+                    }
+                });
+                    
                 mediaPlayer.play();//plays the media player if something is loaded into it
             }
     }
@@ -93,5 +130,12 @@ public class FXMLDocumentController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
     }    
+
+    @Override
+    public void handle(Event event) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    
     
 }
